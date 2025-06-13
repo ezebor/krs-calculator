@@ -1,5 +1,3 @@
-from flask import Flask
-
 from src.clients import GitLabClient, JiraClient
 from src.key_results import KRQualityStandardsHandler, KRVelocityAndOperativeExcellence
 
