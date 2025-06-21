@@ -1,3 +1,4 @@
+import threading
 from collections import defaultdict
 from datetime import datetime
 from typing import Callable, Any
@@ -24,9 +25,14 @@ class KRHandler:
     def process_periods(self, a_function: Callable[[int, int], Any], year_start: int, month_start: int, year_end: int, month_end):
         current_month = month_start
         current_year = year_start
+        threads = []
         while current_year <= year_end and current_month < month_end:
-            a_function(current_year, current_month)
+            thread = threading.Thread(target=a_function, args=(current_year, current_month))
+            threads.append(thread)
+            thread.start()
             current_year, current_month = self.increment_period(current_year, current_month)
+        for t in threads:
+            t.join()
 
     def increment_period(self, year: int, month: int) -> (int, int):
         current_month = month
@@ -200,7 +206,7 @@ class KRQualityStandardsHandler(KRHandler):
     def get_commits(self, year: int, month: int) -> list[Commit]:
         result = []
         for user in json.loads(os.environ.get("USERS")):
-            print(f"Getting commits of {user}")
+            print(f"Getting commits of {user}\n")
 
             commits = [
                 Commit(commit["web_url"], commit["author_name"], commit["project_id"])
@@ -212,7 +218,7 @@ class KRQualityStandardsHandler(KRHandler):
                 commit.set_commit_author(
                     merge_request[0]["author"]["name"] if len(merge_request) > 0 else commit.merge_author)
 
-            print(f"Appending {len(commits)} commits from {user}")
+            print(f"Appending {len(commits)} commits from {user}\n")
             result += commits
 
         return result
@@ -238,7 +244,7 @@ class KRQualityStandardsHandler(KRHandler):
                     diffs = self.client.get_merge_requests_diff(commit.sha, commit.project_id)
                     commit.set_has_tests(diffs)
                     commits.append(commit)
-                    print(f"Processed commit: {commit}")
+                    print(f"Processed commit: {commit}\n")
                 self.create_csv_with_tests_metric(commits, month, year)
 
     def create_csv_with_tests_metric(self, commits: list[Commit], month: int, year: int):
