@@ -20,6 +20,9 @@ class KRHandler:
         self.metric_rows: dict = {}
 
     def calculate(self) -> Any:
+        threading.Thread(target=self.async_calculate).start()
+
+    def async_calculate(self) -> None:
         pass
 
     def process_periods(self, a_function: Callable[[int, int], Any], year_start: int, month_start: int, year_end: int, month_end):
@@ -58,7 +61,7 @@ class KRVelocityAndOperativeExcellence(KRHandler):
         self.sprint_date_ranges = {}
         self.year = year
 
-    def calculate(self):
+    def async_calculate(self):
         self.download_statistics()
         self.build_metric()
 
@@ -182,7 +185,7 @@ class KRQualityStandardsHandler(KRHandler):
         self.year_end = year_end
         self.month_end = month_end
 
-    def calculate(self) -> None:
+    def async_calculate(self) -> None:
         params = [self.year_start, self.month_start, self.year_end, self.month_end]
         self.download_commits(*params)
         self.download_testing_data(*params)
